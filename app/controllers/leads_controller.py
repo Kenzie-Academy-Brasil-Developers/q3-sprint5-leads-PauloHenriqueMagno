@@ -7,24 +7,30 @@ from app.exceptions.unique_violation_error import UniqueViolationError
 
 def get_leads():
   """ Get all leads. """
+  try:
+    leads = Lead.query.all()
 
-  leads = Lead.query.all()
+    if len(leads) == 0:
+      raise NoDataFound()
 
-  serializer = [
-    {
-      "name": lead.name,
-      "email": lead.email,
-      "phone": lead.phone,
-      "creation_date": lead.creation_date,
-      "last_visit": lead.last_visit,
-      "visits": lead.visits
-    } for lead in leads
-  ]
+    serializer = [
+      {
+        "id": lead.id,
+        "name": lead.name,
+        "email": lead.email,
+        "phone": lead.phone,
+        "creation_date": lead.creation_date,
+        "last_visit": lead.last_visit,
+        "visits": lead.visits
+      } for lead in leads
+    ]
 
-  serializer = Lead.sort_by_visits(serializer)
+    serializer = Lead.sort_by_visits(serializer)
 
-  return jsonify(serializer), 200
+    return jsonify(serializer), 200
 
+  except NoDataFound:
+    return jsonify({"error": "leads list is empty"}), 404
 
 def creat_lead():
   """ Create a new lead. """
@@ -151,6 +157,8 @@ def delete_lead():
 
     if not email:
       raise NullValueNotAllowed("email is necessary")
+    if type(email) != str:
+      raise TypeError("email have to be string")
 
     lead = Lead.query.filter(Lead.email == email).first()
 
@@ -160,7 +168,10 @@ def delete_lead():
     current_app.db.session.delete(lead)
     current_app.db.session.commit()
 
-    return jsonify(), 200
+    return jsonify(), 204
+
+  except TypeError as err:
+    return jsonify({"error": err.args[0]}), 400
 
   except NullValueNotAllowed as err:
     return jsonify({"error": err.args[0]}), 400

@@ -10,7 +10,7 @@ class Lead(db.Model):
 
   __tablename__ = "leads"
 
-  id = Column(Integer, primary_key = True)
+  id: int = Column(Integer, primary_key = True)
   name: str = Column(String, nullable = False)
   email: str = Column(String, unique = True, nullable = False)
   phone: str = Column(String, unique = True, nullable = False)
